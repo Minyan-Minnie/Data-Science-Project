@@ -4,6 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score, recall_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 df = pd.read_csv("dataset.csv")
 
@@ -50,3 +52,21 @@ for t in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
 """
 
 print("Random Forest:\nPrecision: ", precision_score(test_y, pred_y), "\nRecall:    ", recall_score(test_y, pred_y), "\nF1:        ", f1_score(test_y, pred_y))
+
+#Graph comparing the amount of songs that are popular vs not popular
+df["popular"].value_counts().sort_index().plot(kind = "bar")
+
+plt.title("Popular Songs vs Unpopular Songs")
+plt.xlabel("Popularity Group")
+plt.ylabel("Number of Songs")
+plt.xticks([0, 1], ["Unpopular", "Popular"], rotation = 0)
+plt.show()
+
+#Using the random forest model to help us figure out which feature played a big role in deciding popularity
+most_useful_feat = clf_rf.feature_importances_
+
+plt.barh(feats, most_useful_feat)
+plt.title("Importance of Features Based on Random Forest")
+plt.xlabel("Importance")
+plt.ylabel("Feature")
+plt.show()
