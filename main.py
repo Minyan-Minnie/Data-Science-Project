@@ -87,10 +87,7 @@ plt.show()
 # Graph showing if Logistic Regression is pushing model towards Popular or Unpopular
 lr_coefficients = clf_lr.coef_[0]
 
-coef_df = pd.DataFrame({
-    "Feature": feats,
-    "Coefficient": lr_coefficients
-}).sort_values(by = "Coefficient", ascending = True)
+coef_df = pd.DataFrame({ "Feature": feats, "Coefficient": lr_coefficients }).sort_values(by = "Coefficient", ascending = True)
 
 plt.barh(coef_df["Feature"], coef_df["Coefficient"])
 plt.title("Logistic Regression Feature Coefficients")
@@ -102,11 +99,9 @@ plt.show()
 # ===================================================================================
 
 # Graph comparing Logistic Regression and Random Forest performance
-metrics_df = pd.DataFrame({
-    "Metric": ["Accuracy", "Precision", "Recall", "F1"],
-    "Logistic Regression": [lr_accuracy, lr_precision, lr_recall, lr_f1],
-    "Random Forest": [rf_accuracy, rf_precision, rf_recall, rf_f1]
-})
+metrics_df = pd.DataFrame({ "Measurement Type": ["Accuracy", "Precision", "Recall", "F1"],
+                           "Logistic Regression": [lr_accuracy, lr_precision, lr_recall, lr_f1],
+                           "Random Forest": [rf_accuracy, rf_precision, rf_recall, rf_f1] })
 
 metrics_df.set_index("Metric").plot(kind = "bar")
 
