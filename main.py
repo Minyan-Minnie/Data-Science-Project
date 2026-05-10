@@ -5,7 +5,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import joblib
+#from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
 
 df = pd.read_csv("dataset.csv")
 
@@ -66,6 +68,84 @@ rf_precision = precision_score(test_y, pred_y)
 rf_recall = recall_score(test_y, pred_y)
 rf_f1 = f1_score(test_y, pred_y)
 
+#===================================================
+clf_rf_tuned = RandomForestClassifier(
+    n_estimators=300,
+    max_depth=12
+).fit(train_scaled_x, train_y)
+
+prob_y_tuned = clf_rf_tuned.predict_proba(test_scaled_x)[:, 1]
+pred_y_tuned = (prob_y_tuned > 0.12).astype(int)                  #used a threshold of 0.12 because I found it works best here, still only made the f1 score worse
+
+print("Random Forest w/ Hyperparameters:\nPrecision: ", precision_score(test_y, pred_y_tuned), "\nRecall:    ", recall_score(test_y, pred_y_tuned), "\nF1:        ", f1_score(test_y, pred_y_tuned), "\nAccuracy:  ", accuracy_score(test_y, pred_y_tuned))
+
+#Random Forest with Hyperparameters Scores
+rf_hyper_accuracy = accuracy_score(test_y, pred_y_tuned)
+rf_hyper_precision = precision_score(test_y, pred_y_tuned)
+rf_hyper_recall = recall_score(test_y, pred_y_tuned)
+rf_hyper_f1 = f1_score(test_y, pred_y_tuned)
+
+
+#now trying with additional features (liveness and duration)
+more_feats = [
+    "danceability",
+    "energy",
+    "loudness",
+    "tempo",
+    "valence",
+    "instrumentalness",
+    "speechiness",
+    "liveness",
+    "duration_ms"
+]
+
+df_more = pd.read_csv("dataset.csv")
+
+df_more = df_more[more_feats + [pred_popularity]]
+df_more = df_more.dropna()
+
+df_more["popular"] = (df_more["popularity"] >= 70).astype(int)
+
+x_more = df_more[more_feats]
+y_more = df_more["popular"]
+
+train_x_more, test_x_more, train_y_more, test_y_more = train_test_split(
+    x_more,
+    y_more,
+    test_size=0.2,
+    random_state=42,
+    stratify=y_more
+)
+
+scale_more = StandardScaler()
+
+train_scaled_more = scale_more.fit_transform(train_x_more)
+test_scaled_more = scale_more.transform(test_x_more)
+
+clf_rf_more = RandomForestClassifier().fit(train_scaled_more, train_y_more)
+
+prob_y_more = clf_rf_more.predict_proba(test_scaled_more)[:, 1]
+pred_y_more = (prob_y_more > 0.4).astype(int)
+
+print(
+    "Additional Features Random Forest:"
+    "\nPrecision: ", precision_score(test_y_more, pred_y_more),
+    "\nRecall:    ", recall_score(test_y_more, pred_y_more),
+    "\nF1:        ", f1_score(test_y_more, pred_y_more),
+    "\nAccuracy:  ", accuracy_score(test_y_more, pred_y_more)
+)
+#adding features didn't change anything, best score still around 0.7
+
+#Random Forest with Added Features Scores
+rf_feats_accuracy = accuracy_score(test_y_more, pred_y_more)
+rf_feats_precision = precision_score(test_y_more, pred_y_more)
+rf_feats_recall = recall_score(test_y_more, pred_y_more)
+rf_feats_f1 = f1_score(test_y_more, pred_y_more)
+
+
+#=======================================================================================================================
+#Below are a bunch of graphs/visuals
+
 #Graph comparing the amount of songs that are popular vs not popular
 df["popular"].value_counts().sort_index().plot(kind = "bar")
 
@@ -98,16 +178,24 @@ plt.show()
 
 # ===================================================================================
 
-# Graph comparing Logistic Regression and Random Forest performance
+# Graph comparing Logistic Regression vs Random Forest vs RF w/ Hyperparameter vs RF w/ Added Feats performance
 metrics_df = pd.DataFrame({ "Measurement Type": ["Accuracy", "Precision", "Recall", "F1"],
                            "Logistic Regression": [lr_accuracy, lr_precision, lr_recall, lr_f1],
-                           "Random Forest": [rf_accuracy, rf_precision, rf_recall, rf_f1] })
+                           "Random Forest": [rf_accuracy, rf_precision, rf_recall, rf_f1],
+                           "Random Forest w/ Hyperparameters": [rf_hyper_accuracy, rf_hyper_precision, rf_hyper_recall, rf_hyper_f1],
+                           "Random Forest w/ Added Features": [rf_feats_accuracy, rf_feats_precision, rf_feats_recall, rf_feats_f1]})
 
-metrics_df.set_index("Metric").plot(kind = "bar")
 
-plt.title("Logistic Regression vs. Random Forest")
+metrics_df.set_index("Measurement Type").plot(kind = "bar")
+
+plt.title("Logistic Regression vs. Random Forest[Base, w/ Hyperparameters, w/ Added Features]")
 plt.xlabel("Selected Measurement")
 plt.ylabel("Score")
 plt.ylim(0, 1)
 plt.xticks(rotation = 0)
 plt.show()
+
+
+
+joblib.dump(clf_rf, "spotify_model.pkl")      #saves the training data so that we could use it for the UI
+joblib.dump(scale, "spotify_scaler.pkl")      #saves the training data so that we could use it for the UI
