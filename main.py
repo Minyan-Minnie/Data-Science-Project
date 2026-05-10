@@ -6,7 +6,6 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import joblib
-#from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 df = pd.read_csv("dataset.csv")
